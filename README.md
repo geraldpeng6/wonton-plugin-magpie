@@ -26,7 +26,7 @@ scripts/check.sh
 本插件声明 `kind: system`，只能随核心镜像预装，不能经普通插件安装接口安装。因此模板的 `scripts/dev.sh install`、`reinstall` 和通用安装冒烟不能替代系统插件验证。集成开发需构建包含本仓库插件包的核心镜像，再以该镜像启动独立实例：
 
 ```sh
-WONTON_CORE_IMAGE=<包含本插件的核心镜像> WONTON_INSTANCE=magpiedev scripts/dev.sh up
+WONTON_CORE_IMAGE=<包含本插件的本地核心镜像> WONTON_PULL=never WONTON_INSTANCE=magpiedev scripts/dev.sh up
 scripts/dev.sh status
 scripts/dev.sh token
 ```
