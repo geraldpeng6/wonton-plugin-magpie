@@ -73,7 +73,7 @@ configs:
     file: ./default-model.sh
 
 x-wonton:
-  spec: "0.6"
+  spec: "0.7"
   id: ai.usemagpie.magpie
   version: 0.6.1
   kind: system
