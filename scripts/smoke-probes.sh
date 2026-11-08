@@ -20,13 +20,13 @@ data_write() {
   marker="smoke-$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
   docker exec "$(magpie_container)" sh -c "printf %s '$marker' > /config/smoke-marker" ||
     { echo "写标记失败"; return 1; }
-  printf '%s\n' "$marker" >"$SMOKE_STATE/magpie-marker"
+  printf '%s\n' "$marker" >"$SMOKE_STATE"
 }
 
 data_check() {
   local marker want
-  [[ -s "$SMOKE_STATE/magpie-marker" ]] || { echo "标记文件不在：data_write 没跑成？"; return 1; }
-  read -r marker <"$SMOKE_STATE/magpie-marker"
+  [[ -s "$SMOKE_STATE" ]] || { echo "标记文件不在：data_write 没跑成？"; return 1; }
+  read -r marker <"$SMOKE_STATE"
   want="$(docker exec "$(magpie_container)" cat /config/smoke-marker 2>&1)" ||
     { echo "标记读不到：$want"; return 1; }
   [[ "$want" == "$marker" ]] || { echo "标记对不上：$want != $marker"; return 1; }
