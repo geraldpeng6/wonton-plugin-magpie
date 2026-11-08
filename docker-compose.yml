@@ -16,7 +16,9 @@ services:
     restart: unless-stopped
     # 镜像固定以 uid 65532 运行，不认 PUID/PGID；写明 user，核心据此把数据目录交给它。
     user: "65532:65532"
-    # 同一个进程同时提供网关（3425）和网页（3430）。
+    # 同一个进程同时提供网关（3425）和网页（3430）。网页入口先按插件的部署策略固定版本行为
+    # （关掉自动更新和 Update 气泡，见 web.sh），再起 magpie 本体。
+    entrypoint: [sh, /wonton/web.sh]
     command: ["web", "--addr", "0.0.0.0:3430", "--no-open"]
     environment:
       TZ: ${TZ}
@@ -28,6 +30,9 @@ services:
     volumes:
       - ${WONTON_APP_DATA}/config:/config
     configs:
+      # 网页入口（web.sh）：设置固定版本的更新策略再起 magpie 本体。
+      - source: web
+        target: /wonton/web.sh
       # 核心签发、吊销网关凭据时在本容器里执行（x-wonton.provides.models.credentials）。
       - source: credentials
         target: /wonton/credentials.sh
@@ -65,6 +70,8 @@ services:
         condition: service_healthy
 
 configs:
+  web:
+    file: ./web.sh
   credentials:
     file: ./credentials.sh
   providers:
