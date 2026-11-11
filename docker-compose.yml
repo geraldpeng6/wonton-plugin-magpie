@@ -91,7 +91,7 @@ configs:
 x-wonton:
   spec: "0.7"
   id: ai.usemagpie.magpie
-  version: 0.6.1
+  version: 0.6.2
   kind: system
   title: { zh: 模型设置, en: Models }
   description:
@@ -100,6 +100,9 @@ x-wonton:
   icon: icon.png
   notices: [NOTICE]
   tags: { zh: [系统, AI], en: [System, AI] }
+  release_notes:
+    zh: 固定版本不再弹网页的自更新气泡、不再自动检查更新；手机网页页头收成一行。
+    en: "Fixed-version installs no longer show the in-app update pill or auto-update check; the mobile web header collapses to one line."
   webui:
     service: magpie
     port: 3430
