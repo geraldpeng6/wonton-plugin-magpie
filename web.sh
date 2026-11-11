@@ -27,4 +27,36 @@ grep -q '"noAutoUpdate"[[:space:]]*:[[:space:]]*true' "$settings" ||
   { echo "noAutoUpdate 没设上，settings.json 里有不认识的写法：$settings" >&2; exit 1; }
 grep -q '"noUpdatePill"[[:space:]]*:[[:space:]]*true' "$settings" ||
   { echo "noUpdatePill 没设上，settings.json 里有不认识的写法：$settings" >&2; exit 1; }
-exec /magpie "$@"
+# 网页本体听内部端口：3430 交给 inject.pl，它在页面头插入 layout.css（固定版本没有样式设置）。
+# compose 传的 --addr 换成内部端口；magpie 或代理任一退出，容器就退出，交给重启策略。
+command -v perl >/dev/null || { echo "镜像里没有 perl，注入代理起不来" >&2; exit 1; }
+args=
+while [ $# -gt 0 ]; do
+  case $1 in
+    --addr)
+      [ $# -ge 2 ] || { echo "--addr 没有值" >&2; exit 1; }
+      shift
+      args="$args --addr 127.0.0.1:3431"
+      ;;
+    *) args="$args $1" ;;
+  esac
+  shift
+done
+case " $args " in
+  *" --addr 127.0.0.1:3431 "*) ;;
+  *) echo "compose 的 command 里没有 --addr，网页本体不知道听哪" >&2; exit 1 ;;
+esac
+# shellcheck disable=SC2086
+set -- $args
+/magpie "$@" &
+magpie=$!
+perl /wonton/inject.pl &
+proxy=$!
+trap 'kill "$magpie" "$proxy" 2>/dev/null' INT TERM
+# 本体的网关健康检查看不出网页入口死没死，两个进程互相看着。
+( while kill -0 "$magpie" 2>/dev/null; do sleep 1; done; kill "$proxy" 2>/dev/null ) &
+wait "$proxy" || true
+kill "$magpie" 2>/dev/null || true
+wait 2>/dev/null || true
+kill -0 "$magpie" 2>/dev/null && exit 0
+exit 1
