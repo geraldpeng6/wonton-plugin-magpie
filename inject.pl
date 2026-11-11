@@ -2,15 +2,17 @@
 # 网页入口（3430）：把请求转给内部端口上的 magpie 本体（3431），在网页 HTML 的 </head> 前插入
 # layout.css。固定版本的 magpie 没有自定义样式的设置，页面头只能在这里改。
 #
-# 只缓冲 HTML 的 200 响应（要插入），其余（API、SSE、图标）拿到响应头就原样流过去，长连接不断。
-# 向上游不要压缩，注入才不用先解 gzip。上游连不上回 502。每个连接一个子进程。
+# 只缓冲导航请求拿回的 HTML 200（要插入），其余（API、SSE、图标、XHR）拿到响应头就原样流过去，
+# 长连接不断。只有导航请求向上游要未压缩的正文（注入才不用先解 gzip），样式、脚本照旧收 gzip——
+# 首次加载 4MB 的正文压到约四分之一，是上游自己量过的。上游连不上回 502。每个连接一个子进程。
 use strict;
 use warnings;
 use IO::Socket::INET;
 
-my $listen_port = 3430;
-my $upstream    = '127.0.0.1:3431';
-my $css_path    = '/wonton/layout.css';
+# 端口和样式路径写死在部署里；环境变量只给本地试验用。
+my $listen_port = $ENV{WONTON_WEB_PORT}    // 3430;
+my $upstream    = $ENV{WONTON_WEB_UPSTREAM} // '127.0.0.1:3431';
+my $css_path    = $ENV{WONTON_LAYOUT_CSS}  // '/wonton/layout.css';
 
 my $css = do {
   open my $fh, '<', $css_path or die "读不到 $css_path：$!\n";
@@ -61,10 +63,11 @@ sub serve {
     copy($client, $up, $length - length $first);
   }
 
-  my ($status, $type, $chunked, $out, $rrest) = read_response_head($up);
+  my ($status, $type, $chunked, $out, $rrest, $gz) = read_response_head($up);
   unless ($status) { close $up; close $client; return; }
 
-  my $html = $type =~ m{^text/html}i && $status =~ /^HTTP\/1\.[01] 200/;
+  # 保险：拿回来的 HTML 若是压缩的（只有没挡掉压缩的 XHR 会这样），按字节插会把页面插坏，原样放行。
+  my $html = $nav && !$gz && $type =~ m{^text/html}i && $status =~ /^HTTP\/1\.[01] 200/;
   if ($html) {
     my $raw = $rrest // '';
     $raw .= do { local $/; <$up> } // '';
@@ -98,7 +101,7 @@ sub read_request {
   $start =~ s/\r$//;
   my ($method, $path) = split / /, $start;
   return unless defined $path;
-  # 导航请求要拿没注入的页面，所以条件请求由这里挡掉：上游的 ETag 算在注入前的正文上，
+  # 导航请求要拿注入过的页面，所以要挡掉条件请求：上游的 ETag 算在注入前的正文上，
   # 顺着它会回 304，浏览器就用回旧页面，注入的新样式看不到。Accept 不一定排在
   # If-None-Match 前面，先整段看一眼。
   my $nav = grep { /^accept:.*text\/html/i } @lines;
@@ -107,7 +110,10 @@ sub read_request {
     $line =~ s/\r$//;
     next if $line eq '';
     my ($name) = split /:/, $line;
-    next if lc $name =~ /^(host|accept-encoding|connection|keep-alive|proxy-connection)$/;
+    # Host 和 Expect 由这里应掉：Host 由代理按上游重写，请求体是先读完才转发的，传 Expect 只会
+    # 叫客户端白等一个 100 Continue。
+    next if lc $name =~ /^(host|connection|keep-alive|proxy-connection|expect)$/;
+    next if $nav && lc $name eq 'accept-encoding';
     next if $nav && lc $name =~ /^(if-none-match|if-modified-since)$/;
     $length = $1 if $line =~ /^content-length:\s*(\d+)/i;
     push @keep, $line;
@@ -115,13 +121,13 @@ sub read_request {
   return ($method, $path, \@keep, $length, $rest, $nav);
 }
 
-# (状态行, Content-Type, 是否 chunked, 转发的响应头, 多读到的响应体开头)
+# (状态行, Content-Type, 是否 chunked, 转发的响应头, 多读到的响应体开头, 是否压缩)
 sub read_response_head {
   my ($up) = @_;
   my ($head, $rest) = read_head($up) or return;
   my ($status, @lines) = split /\r?\n/, $head;
   $status =~ s/\r$//;
-  my ($type, $chunked, @keep) = ('', 0);
+  my ($type, $chunked, $gz, @keep) = ('', 0, 0);
   for my $line (@lines) {
     $line =~ s/\r$//;
     next if $line eq '';
@@ -129,9 +135,10 @@ sub read_response_head {
     next if lc $name =~ /^(connection|keep-alive)$/;
     $type = $1 if $line =~ /^content-type:\s*(.*)/i;
     $chunked = 1 if lc $name eq 'transfer-encoding' && $line =~ /chunked/i;
+    $gz = 1 if lc $name eq 'content-encoding' && $line =~ /gzip|deflate|br|zstd/i;
     push @keep, $line;
   }
-  return ($status, $type, $chunked, \@keep, $rest);
+  return ($status, $type, $chunked, \@keep, $rest, $gz);
 }
 
 # (头, 多读到的正文开头)。一次 sysread 可能把 \r\n\r\n 之后的内容也读进来，
