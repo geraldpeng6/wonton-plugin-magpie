@@ -6,6 +6,7 @@ Wonton 的系统模型网关插件。主人在 magpie 网页里配置一次服�
 
 使用 [yetone/magpie](https://github.com/yetone/magpie) 的官方镜像 `ghcr.io/yetone/magpie`（MIT），具体版本和摘要固定在 `docker-compose.yml`，本仓库不修改或重建上游镜像。版本由插件固定，更新随插件发布（换镜像摘要）：`web.sh` 在每次启动时关掉 magpie 的自动更新检查和网页顶栏的 Update 气泡（magpie 的设置 `noAutoUpdate`、`noUpdatePill`，每次启动重设）。网页 Settings 里仍可手动检查更新，但固定镜像里的 magpie 装不进自己，会如实报错。
 
+- 手机上的网页页面头收成一行：固定版本把品牌和页面标签分成两行，上面一行近 50px 只有标志和两个图标，页面内容被压到 110px 以下；上游 v0.1.3608 起改成底部标签栏。`web.sh` 起的 `inject.pl` 在网页 HTML 里插入 `layout.css`，不改镜像。
 - 核心经模型网关转发 OpenAI、Anthropic 和 Gemini 请求；`credentials.sh` 为调用方签发、吊销独立网关凭据。
 - 网页由核心网关代登录（`sso: proxy`），服务商配置和密钥保存在插件数据目录中。
 - `providers.sh` 提供服务商列表、保存和连通性测试命令。
