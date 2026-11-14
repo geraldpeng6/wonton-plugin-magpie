@@ -9,7 +9,6 @@ Wonton 的系统模型网关插件。主人在 magpie 网页里配置一次服�
 - 手机上的网页页面头收成一行：固定版本把品牌和页面标签分成两行，上面一行近 50px 只有标志和两个图标，页面内容被压到 110px 以下；上游 v0.1.3608 起改成底部标签栏。`web.sh` 起的 `inject.pl` 在网页 HTML 里插入 `layout.css`，不改镜像。
 - 核心经模型网关转发 OpenAI、Anthropic 和 Gemini 请求；`credentials.sh` 为调用方签发、吊销独立网关凭据。
 - 网页由核心网关代登录（`sso: proxy`），服务商配置和密钥保存在插件数据目录中。
-- `providers.sh` 提供服务商列表、保存和连通性测试命令。
 - `default-model.sh` 维护 `group/wonton-default`，依据服务商和模型目录选择默认模型；主人改过该组后不覆盖，删除后按规则重建。维护容器不联网。
 
 ## 开发与检查
@@ -34,19 +33,6 @@ scripts/dev.sh token
 
 用令牌登录实例网页的“模型设置”，验证服务商配置和模型请求；重新创建插件容器后确认配置仍保留。只清理自己的实例，不执行全局 Docker prune。开发结束用 `scripts/dev.sh purge` 清理该实例。
 
-## 服务商命令测试
-
-`test-providers.sh` 需要 Docker，使用固定摘要的 magpie 镜像与仅存在于测试中的 OpenAI 兼容桩。测试容器只接入内部网络，不使用真实厂商或真实 key；退出时删除自己创建的容器、网络、卷和镜像标签。
-
-在插件仓库根目录运行：
-
-```sh
-nice -n 19 sh ./test-providers.sh
-```
-
-共享 Docker 时先遵守所在开发环境的负载限制。可用 `WONTON_PROVIDER_STUB_IMAGE` 指定本地可用的 Python 3 测试镜像（默认 `python:3.12-alpine`）。
-
-覆盖只测试不保存、自定义保存、拒绝 key、断连和超时，以及从另一容器用插件网关凭据请求 `group/wonton-default`，验证请求实际使用所填的服务商和模型；同时验证主人修改默认组后不被覆盖。
 
 ## 图标
 
