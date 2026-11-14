@@ -41,8 +41,6 @@ services:
       # 核心签发、吊销网关凭据时在本容器里执行（x-wonton.provides.models.credentials）。
       - source: credentials
         target: /wonton/credentials.sh
-      - source: providers
-        target: /wonton/providers.sh
     healthcheck:
       test: ["CMD", "/magpie", "healthcheck"]
       interval: 30s
@@ -83,15 +81,13 @@ configs:
     file: ./layout.css
   credentials:
     file: ./credentials.sh
-  providers:
-    file: ./providers.sh
   default_model:
     file: ./default-model.sh
 
 x-wonton:
   spec: "0.7"
   id: ai.usemagpie.magpie
-  version: 0.6.2
+  version: 0.6.3
   kind: system
   title: { zh: 模型设置（magpie）, en: Models (magpie) }
   description:
@@ -101,8 +97,10 @@ x-wonton:
   notices: [NOTICE]
   tags: { zh: [系统, AI], en: [System, AI] }
   release_notes:
-    zh: 固定版本不再弹网页的自更新气泡、不再自动检查更新；手机网页页头收成一行。
-    en: "Fixed-version installs no longer show the in-app update pill or auto-update check; the mobile web header collapses to one line."
+    zh: 模型设置统一通过网页配置，移除旧的原生服务商接口。
+    en: "Model setup now uses the magpie web page; the old native provider interface was removed."
+    ja: "モデル設定を magpie のウェブページに統一し、旧ネイティブ事業者インターフェースを削除しました。"
+    zh-Hant: 模型設定統一透過 magpie 網頁，移除舊的原生服務商介面。
   webui:
     service: magpie
     port: 3430
@@ -126,13 +124,6 @@ x-wonton:
       credentials:
         issue: [sh, /wonton/credentials.sh, issue, "{name}"]
         revoke: [sh, /wonton/credentials.sh, revoke, "{name}"]
-      providers:
-        list: [sh, /wonton/providers.sh, list]
-        save: [sh, /wonton/providers.sh, save, "{id}"]
-        test: [sh, /wonton/providers.sh, test, "{id}"]
-        custom:
-          save: [sh, /wonton/providers.sh, custom-save]
-          test: [sh, /wonton/providers.sh, custom-test]
   secrets:
     web_key:
       generate: { bytes: 32 }
