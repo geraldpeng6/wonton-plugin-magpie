@@ -166,9 +166,9 @@ if [[ -n "${WONTON_DEV_EGRESS_PROXY:-}" ]]; then
     { fail 装得上 "出口代理探测没通：$(jq -c '.plugin_path' <<<"$probe")"; exit 0; }
 fi
 
-# Hermes 是核心预装的默认 Agent：工具 Bot 要用，装得上这项也确认它健康（不锁版本）。
+# Hermes 是核心随镜像带的默认 Agent：工具 Bot 要用，装得上这项也确认它健康（不锁版本）。
 hermes_line="$(probes_status_wait com.nousresearch.hermes 40)" ||
-  { fail 装得上 "预装 Hermes 不是 running healthy：$hermes_line"; exit 0; }
+  { fail 装得上 "随镜像带的 Hermes 不是 running healthy：$hermes_line"; exit 0; }
 say "Hermes：$hermes_line"
 if [[ "$(jq -r '(."x-wonton".permissions // []) | index("models") // empty' <<<"$PROBES_FACTS")" != "" ]]; then
   magpie_line="$(probes_status_wait ai.usemagpie.magpie 30)" ||
