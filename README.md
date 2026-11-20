@@ -21,12 +21,18 @@ Wonton 的系统模型网关插件。主人在 magpie 网页里配置一次服�
 scripts/check.sh
 ```
 
-检查使用核心镜像里的真实插件解析器；可用 `WONTON_CORE_IMAGE` 指定支持清单 spec 的核心镜像。`scripts/check.sh --official` 另外检查商店要求（许可证、作者、镜像摘要等），不代表本系统插件应加入社区商店。
+检查使用核心镜像里的真实插件解析器；可用 `WONTON_CORE_IMAGE` 指定支持清单 spec 的核心镜像。`scripts/check.sh --official` 另外检查商店要求（许可证、作者、镜像摘要等）。
 
-本插件声明 `kind: system`，只能随核心镜像预装，不能经普通插件安装接口安装。因此模板的 `scripts/dev.sh install`、`reinstall` 和通用安装冒烟不能替代系统插件验证。集成开发需构建包含本仓库插件包的核心镜像，再以该镜像启动独立实例：
+本插件声明 `kind: system`：只给官方插件，核心不预装，主人从商店装。核心在和本版本同批的改动后，普通安装接口也接受它；旧的核心里要用包含这个插件包的核心镜像：
 
 ```sh
-WONTON_CORE_IMAGE=<包含本插件的本地核心镜像> WONTON_PULL=never WONTON_INSTANCE=magpiedev scripts/dev.sh up
+WONTON_CORE_IMAGE=<本地核心镜像> WONTON_PULL=never WONTON_INSTANCE=magpiedev scripts/dev.sh up
+```
+
+核心支持后也可以直接装进自己的实例，模板的 `scripts/dev.sh install .` 和通用安装冒烟就都能用：
+
+```sh
+scripts/dev.sh install .
 scripts/dev.sh status
 scripts/dev.sh token
 ```
