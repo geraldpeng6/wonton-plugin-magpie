@@ -1,6 +1,6 @@
-# magpie 模型网关：系统插件，由核心预装（WONTON_SYSTEM_PLUGINS）。
+# magpie 模型网关：官方插件（kind: app），核心默认不带，主人从商店装。
 #
-# 本插件提供 models：声明了 models 权限的插件经核心转发访问它，各自拿到一个只属于自己的网关凭据
+# 本插件提供 models：`wants: [models]` 的插件经核心转发访问它，各自拿到一个只属于自己的网关凭据
 # （magpie 的 gateway key，可单独限模型、限额度、吊销，用量按凭据名归属），由 credentials.sh 签发。
 #
 # 用户在“模型设置”小程序（magpie 自带网页，3430 端口）里配置 provider 和 key，key 只存在本插件的数据目录。
@@ -85,22 +85,67 @@ configs:
     file: ./default-model.sh
 
 x-wonton:
-  spec: "0.7"
+  spec: "0.16"
   id: ai.usemagpie.magpie
-  version: 0.6.3
-  kind: system
-  title: { zh: 模型设置（magpie）, en: Models (magpie) }
+  version: 0.6.5
+  kind: app
+  title:
+    zh: 模型设置（magpie）
+    en: Models (magpie)
+    zh-Hant: 模型設定（magpie）
+    ja: モデル設定（magpie）
   description:
     zh: 家里所有 AI 功能的总开关：在这里填一次 AI 服务商的 key，所有 Bot 和应用就都能用上 AI。
     en: "The one place to set up AI for your home: add an AI provider's key once, and every bot and app can use it."
+    zh-Hant: 家裡所有 AI 功能的總開關：在這裡填一次 AI 服務商的 key，所有 Bot 和應用就都能用上 AI。
+    ja: 家じゅうの AI 機能の一元スイッチ：ここで AI プロバイダーのキーを一度入れれば、どのボットもアプリも AI を使えます。
   icon: icon.png
   notices: [NOTICE]
   tags: { zh: [系统, AI], en: [System, AI] }
+  author: { name: geraldpeng6 }
+  license: MIT
+  about:
+    zh: |
+      在家填一次 AI 服务商的 key，所有 Bot 和应用就都能用上 AI。
+
+      服务商的 key 只留在家里的服务器，Bot 和应用看不到，也拿不到。
+      每个 Bot 和应用各有自己的通行证，可以单独停掉一个，不影响别的。
+      网页里能换服务商、换 key，也能看到每个通行证用了多少。
+
+      适合聊天、看家这类要用 AI 的功能；家里的 Bot 想说话，装它一次就够。
+    en: |
+      Add an AI provider's key once at home, and every bot and app can use AI.
+
+      The provider's key stays on the home server; bots and apps can't see it or get it.
+      Every bot and app gets its own pass, so one can be stopped without touching the others.
+      The web page lets you change the provider or key, and shows how much each pass has used.
+
+      For AI features like chatting and watching the house; install it once and the bots at home can talk.
+    zh-Hant: |
+      在家裡填一次 AI 服務商的 key，所有 Bot 和應用就都能用上 AI。
+
+      服務商的 key 只留在家裡的伺服器，Bot 和應用看不到，也拿不到。
+      每個 Bot 和應用各有自己的通行證，可以單獨停掉一個，不影響其他。
+      網頁裡能換服務商、換 key，也能看到每個通行證用了多少。
+
+      適合聊天、看家這類要用 AI 的功能；家裡的 Bot 想說話，裝它一次就夠。
+    ja: |
+      家で AI プロバイダーのキーを一度入力すれば、どのボットもアプリも AI を使えます。
+
+      プロバイダーのキーは家のサーバーだけに保存され、ボットやアプリからは見えません。
+      ボットやアプリごとに別の通行証を発行するので、一つだけ止めてもほかには影響しません。
+      ウェブページでプロバイダーやキーを変えられ、通行証ごとの利用量も見られます。
+      チャットや見守りなど、AI を使う機能向けです。家じゅうのボットに話させたいなら、一度入れれば済みます。
+  setup:
+    zh: 打开「模型设置」，选一个 AI 服务商，填入它的 key 并保存。
+    en: Open “Models”, pick an AI provider, enter its key and save.
+    zh-Hant: 打開「模型設定」，選一個 AI 服務商，填入它的 key 並儲存。
+    ja: 「モデル設定」を開き、AI プロバイダーを選んでキーを入力し、保存します。
   release_notes:
-    zh: 模型设置统一通过网页配置，移除旧的原生服务商接口。
-    en: "Model setup now uses the magpie web page; the old native provider interface was removed."
-    ja: "モデル設定を magpie のウェブページに統一し、旧ネイティブ事業者インターフェースを削除しました。"
-    zh-Hant: 模型設定統一透過 magpie 網頁，移除舊的原生服務商介面。
+    zh: 核心默认不带，从商店安装和卸载都走普通流程。
+    en: The home server no longer ships it by default; install it from the store like any other plugin.
+    ja: コアに標準で入っておらず、ストアからの導入と削除は通常の手順になります。
+    zh-Hant: 核心預設不帶，從商店安裝和卸載都走一般流程。
   webui:
     service: magpie
     port: 3430
